@@ -1,0 +1,23 @@
+#!/bin/zsh
+label=io.github.yuma-satake.doff-hot-corner
+dir=${0:A:h}
+plist=$HOME/Library/LaunchAgents/$label.plist
+
+chmod +x "$dir/doff" "$dir/hot-corner"
+mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
+
+sed "s|__HOME__|$HOME|g" "$dir/$label.plist.template" > "$plist"
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null
+launchctl bootstrap "gui/$(id -u)" "$plist"
+
+# 5 is "Start Screen Saver"; 0 and 1 mean no action assigned
+corner=$(defaults read com.apple.dock wvous-bl-corner 2>/dev/null)
+case "${corner:-0}" in
+  0|1)
+    defaults write com.apple.dock wvous-bl-corner -int 5
+    defaults write com.apple.dock wvous-bl-modifier -int 0
+    killall Dock
+    ;;
+  5) ;;
+  *) echo "doff: bottom-left hot corner already has another action, left unchanged" >&2 ;;
+esac
