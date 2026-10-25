@@ -1,0 +1,25 @@
+#!/bin/zsh
+# display off (screen only, prevents system sleep via caffeinate until the user returns)
+pidfile=/tmp/display-off-caffeinate.pid
+
+if [ -f "$pidfile" ]; then
+  kill "$(cat "$pidfile")" 2>/dev/null
+  rm -f "$pidfile"
+fi
+
+caffeinate -i &!
+caffeinate_pid=$!
+echo $caffeinate_pid > "$pidfile"
+pmset displaysleepnow
+
+(
+  idle_seconds() { ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1000000000); exit}' }
+  # the trigger input itself resets the idle time, so wait until the user has left first
+  while [ "$(idle_seconds)" -lt 3 ]; do sleep 1; done
+  while [ "$(idle_seconds)" -ge 2 ]; do sleep 1; done
+  # skip if a newer doff has taken over the pidfile
+  if [ "$(cat "$pidfile" 2>/dev/null)" = "$caffeinate_pid" ]; then
+    kill "$caffeinate_pid" 2>/dev/null
+    rm -f "$pidfile"
+  fi
+) &!

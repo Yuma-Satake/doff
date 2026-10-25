@@ -1,0 +1,10 @@
+#!/bin/zsh
+# macOS hot corners cannot run commands, so the corner is set to start the screen saver and this swaps it for doff
+while true; do
+  if pgrep -qx ScreenSaverEngine; then
+    killall ScreenSaverEngine 2>/dev/null
+    "$HOME/.config/doff/doff"
+    sleep 2
+  fi
+  sleep 1
+done
