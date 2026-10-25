@@ -13,7 +13,7 @@ macOSで画面だけを消し、システムはスリープさせないコマン
 ## 構成
 
 - `doff`: 本体。`pmset displaysleepnow`で画面を消し、`caffeinate -i`でアイドルスリープを防ぐ。`ioreg`の`HIDIdleTime`を1秒ごとに見て、無操作が続いた後に入力があれば`caffeinate`を終了する
-- `hot-corner`: 画面保護プログラム(`ScreenSaverEngine`)の起動を監視し、検知したら終了させて`doff`を実行する。ホットコーナーには任意のコマンドを割り当てられないため、この方式を取る
+- `hot-corner`: ホットコーナーの「画面保護プログラムを開始」を`Dock`が通知した時にシステムログへ出す`com.apple.screensaver.action`を`log stream`で待ち受け、検知したら`doff`を実行する。ホットコーナーには任意のコマンドを割り当てられないため、この方式を取る。画面保護プログラムは`ScreenSaverEngine`のプロセスではなく`WallpaperAgent`が表示するため、プロセスの有無では検知できない
 - `install`: LaunchAgentの生成と登録、左下のホットコーナーの設定を行う。何度実行しても同じ結果になる
 - `init.zsh`: `.zshrc`から読み込むファイル。`doff`のエイリアスを定義し、未インストールなら`install`を実行する
 - `io.github.yuma-satake.doff-hot-corner.plist.template`: `hot-corner`を常駐させるLaunchAgentのテンプレート。`install`が`__HOME__`をホームディレクトリへ置換して登録する
@@ -55,7 +55,7 @@ source "$HOME/.config/doff/init.zsh"
 ## 注意
 
 - ホットコーナーを使う場合、システム設定で画面保護プログラムの起動までの待機時間を設定すると、放置でも画面保護プログラムが起動し、そのたびに`doff`が実行される。待機時間は「なし」のままにする
-- ホットコーナーの操作では、画面保護プログラムが監視間隔の分だけ一瞬表示されてから画面が消える
+- ホットコーナーの操作では、画面保護プログラムが一瞬表示されてから画面が消える。画面保護プログラム自体は終了させず、復帰時の入力で解除される。画面保護プログラム後にパスワードを求める設定の場合は、復帰時にパスワードの入力が必要になる
 - 復帰の判定はキーボードとマウスの操作のみ。SSHなどの遠隔操作では解除されない。その場合は`kill $(cat /tmp/display-off-caffeinate.pid)`で止める
 
 ## 削除
